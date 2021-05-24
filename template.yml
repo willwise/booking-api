@@ -1,0 +1,151 @@
+# This is the SAM template that represents the architecture of your serverless application
+# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-template-basics.html
+
+# The AWSTemplateFormatVersion identifies the capabilities of the template
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/format-version-structure.html
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  booking-api
+
+# Transform section specifies one or more macros that AWS CloudFormation uses to process your template
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/transform-section-structure.html
+Transform:
+- AWS::Serverless-2016-10-31
+
+# Resources declares the AWS resources that you want to include in the stack
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
+Resources:
+  # Each Lambda function is defined by properties:
+  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+
+  # This is a Lambda function config associated with the source code: hello-from-lambda.js
+  createResource:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/create-resource/
+      Handler: index.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: A Lambda function that returns a static string.
+      Policies:
+        # Give Lambda basic execution Permission to the helloFromLambda
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+      Events:
+        BookingApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: bookingApi
+            Path: /resource
+            Method: post
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref resourceTable
+
+  createAvailability:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/create-availability/
+      Handler: index.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: A Lambda function that returns a static string.
+      Policies:
+        # Give Lambda basic execution Permission to the helloFromLambda
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+      Events:
+        BookingApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: bookingApi
+            Path: /availability
+            Method: post
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref resourceTable
+
+  getAvailability:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/get-availability/
+      Handler: index.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: A Lambda function that returns a static string.
+      Policies:
+        # Give Lambda basic execution Permission to the helloFromLambda
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+      Events:
+        BookingApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: bookingApi
+            Path: /availability
+            Method: get
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref resourceTable
+
+  createBooking:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/create-booking/
+      Handler: index.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: A Lambda function that returns a static string.
+      Policies:
+        # Give Lambda basic execution Permission to the helloFromLambda
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+      Events:
+        BookingApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: bookingApi
+            Path: /booking
+            Method: post
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref resourceTable
+
+  resourceTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "Name"
+          AttributeType: "S"
+        -
+          AttributeName: "Group"
+          AttributeType: "S"
+      KeySchema:
+        -
+          AttributeName: "Group"
+          KeyType: "HASH"
+        -
+          AttributeName: "Name"
+          KeyType: "RANGE"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"  
+
+
+  bookingApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      Cors:
+        AllowMethods: "'POST'"
+        AllowOrigin: "'*'"
+      OpenApiVersion: '2.0'
