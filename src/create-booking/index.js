@@ -24,25 +24,29 @@ async function createBooking(time, group, name){
 
     var getParams = {
         TableName: tableName,
-        KeyConditionExpression:"#group = :group and #name = :name",
+        KeyConditionExpression:"#group = :group",
         ExpressionAttributeNames:{
             "#group" : "Group",
-            "#name" : "Name"
         },
         ExpressionAttributeValues:{
             ":group": group,
-            ":name" : name
         }
     };
 
     var data = await docClient.query(getParams).promise()
 
-    var resource = data.Items[0]
-    console.log(time)
-    console.log(resource.Availabilities)
+    var isBooked = true
+    for (let i = 0; i < data.Items.length; i++) {
+        const element = array[i];
+        if(element.Availabilities.indexOf(time)>-1){
+            isBooked = false
+            break
+        }
+        
+    }
 
-    const index = resource.Availabilities.indexOf(time)
-    if(index > -1){
+    if(!isBooked){
+        var resource = data.Items[i]
         resource.Availabilities.splice(index, 1)
     } else {
         return "Booking already taken"
