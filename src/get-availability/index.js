@@ -31,5 +31,19 @@ async function getAppointments(startDate, endDate, group){
 
     var data = await docClient.query(getParams).promise()
 
-    return data.Items[0].Availabilities
+    var availabilities = []
+
+    data.Items.forEach(Item => {
+        if(Item.Availabilities != undefined){
+            availabilities = availabilities.concat(Item.Availabilities)
+        }
+    });
+
+    availabilities = removeDupes(availabilities)
+    console.log(availabilities)
+    return availabilities
+}
+
+function removeDupes(array){
+    return [...new Set(array)]
 }
